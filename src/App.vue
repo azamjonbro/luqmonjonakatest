@@ -29,46 +29,52 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script>
 import axios from 'axios'
 
-const username = ref('')
-const phone = ref('')
-const message = ref('')
-const isDisabled = ref(false)
-const lastSentTime = ref(0)
+export default {
+  name: 'App',
+  data() {
+    return {
+      username: '',
+      phone: '',
+      message: '',
+      isDisabled: false,
+      lastSentTime: 0,
+      TELEGRAM_BOT_TOKEN: '7179751378:AAGKQ0vgurJjjzBVsHiybs1PMcuu5PbYMGA',
+      TELEGRAM_CHAT_ID: '2043384301',
+    }
+  },
+  methods: {
+    async handleSubmit() {
+      const now = Date.now()
+      if (now - this.lastSentTime < 10000) {
+        this.message = 'Please wait 10 seconds before sending another message.'
+        return
+      }
 
-const TELEGRAM_BOT_TOKEN = '7179751378:AAGKQ0vgurJjjzBVsHiybs1PMcuu5PbYMGA'
-const TELEGRAM_CHAT_ID = '2043384301'
+      this.isDisabled = true
 
-const handleSubmit = async () => {
-  const now = Date.now()
-  if (now - lastSentTime.value < 10000) {
-    message.value = 'Please wait 10 seconds before sending another message.'
-    return
-  }
+      const text = `📩 Yangi foydalanuvchi:\n👤 Username: ${this.username}\n📱 Phone: ${this.phone}`
 
-  isDisabled.value = true
+      try {
+        await axios.post(`https://api.telegram.org/bot${this.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          chat_id: this.TELEGRAM_CHAT_ID,
+          text,
+        })
 
-  try {
-    const text = `📩 Yangi foydalanuvchi:\n👤 Username: ${username.value}\n📱 Phone: ${phone.value}`
+        this.message = 'Ma’lumot yuborildi ✅'
+        this.lastSentTime = now
+      } catch (error) {
+        console.error(error)
+        this.message = 'Xatolik yuz berdi ❌'
+      }
 
-    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-    })
-
-    message.value = 'Ma’lumot yuborildi ✅'
-    lastSentTime.value = now
-  } catch (err) {
-    console.error(err)
-    message.value = 'Xatolik yuz berdi ❌'
-  }
-
-  setTimeout(() => {
-    isDisabled.value = false
-  }, 10000)
+      setTimeout(() => {
+        this.isDisabled = false
+      }, 10000)
+    },
+  },
 }
 </script>
 
